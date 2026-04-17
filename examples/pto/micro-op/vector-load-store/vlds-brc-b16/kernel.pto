@@ -4,10 +4,10 @@
 // target_ops: pto.vlds
 // scenarios: core-f16, full-mask, aligned, dist-brc-b16
 // -----------------------------------------------------------------------------
-// Validate one representative `BRC` load on `b16`.
+// Validate one representative `BRC_B16` load on `b16`.
 // The case keeps the structure minimal:
 //   1. DMA one input tile into UB
-//   2. issue `pto.vlds` with `dist = "BRC"` inside `pto.vecscope`
+//   2. issue `pto.vlds` with `dist = "BRC_B16"` inside `pto.vecscope`
 //   3. store the resulting vector back through `pto.vsts`
 
 module attributes {pto.target_arch = "a5"} {
@@ -36,7 +36,7 @@ module attributes {pto.target_arch = "a5"} {
     pto.vecscope {
       %_:1 = scf.for %offset = %c0 to %c1024 step %c128 iter_args(%remaining = %c1024_i32) -> (i32) {
         %mask, %next_remaining = pto.plt_b16 %remaining : i32 -> !pto.mask<b16>, i32
-        %out = pto.vlds %ub_in[%offset] {dist = "BRC"} : !pto.ptr<f16, ub> -> !pto.vreg<128xf16>
+        %out = pto.vlds %ub_in[%offset] {dist = "BRC_B16"} : !pto.ptr<f16, ub> -> !pto.vreg<128xf16>
         pto.vsts %out, %ub_out[%offset], %mask : !pto.vreg<128xf16>, !pto.ptr<f16, ub>, !pto.mask<b16>
         scf.yield %next_remaining : i32
       }

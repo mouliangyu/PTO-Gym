@@ -4,7 +4,7 @@
 // target_ops: pto.vsts
 // scenarios: core-i16, full-mask, aligned, dist-1pt-b16
 // -----------------------------------------------------------------------------
-// Validate one representative `1PT` store distribution on `b16`.
+// Validate one representative `1PT_B16` store distribution on `b16`.
 
 module attributes {pto.target_arch = "a5"} {
   func.func @vsts_1pt_b16_kernel(%arg0: !pto.ptr<i16, gm>, %arg1: !pto.ptr<i16, gm>) {
@@ -33,7 +33,7 @@ module attributes {pto.target_arch = "a5"} {
       %_:1 = scf.for %offset = %c0 to %c1024 step %c128 iter_args(%remaining = %c1024_i32) -> (i32) {
         %mask, %next_remaining = pto.plt_b16 %remaining : i32 -> !pto.mask<b16>, i32
         %vec = pto.vlds %ub_in[%offset] : !pto.ptr<i16, ub> -> !pto.vreg<128xi16>
-        pto.vsts %vec, %ub_out[%offset], %mask {dist = "1PT"} : !pto.vreg<128xi16>, !pto.ptr<i16, ub>, !pto.mask<b16>
+        pto.vsts %vec, %ub_out[%offset], %mask {dist = "1PT_B16"} : !pto.vreg<128xi16>, !pto.ptr<i16, ub>, !pto.mask<b16>
         scf.yield %next_remaining : i32
       }
     }

@@ -26,7 +26,7 @@ def generate(output_dir: Path, seed: int) -> None:
     flat = v1.reshape(-1)
 
     # DINTLV_B32 exposes the two deinterleaved 64-lane results independently.
-    # Observe them through two plain NORM stores:
+    # Observe them through two plain NORM_B32 stores:
     #   low  -> output[offset : offset + 64]
     #   high -> output[offset + 64 : offset + 128]
     for base in range(0, ROWS * COLS, ACTIVE):

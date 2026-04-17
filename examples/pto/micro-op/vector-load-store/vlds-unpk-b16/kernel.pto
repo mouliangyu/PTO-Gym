@@ -4,7 +4,7 @@
 // target_ops: pto.vlds
 // scenarios: core-f16, full-mask, aligned, dist-unpk-b16
 // -----------------------------------------------------------------------------
-// Validate one representative `UNPK` load on `b16`.
+// Validate one representative `UNPK_B16` load on `b16`.
 // Installed A5 `TCvt.hpp::cast16to32` uses `vlds(..., UNPK_B16)` before
 // `vcvt(..., PART_EVEN)`, so this case probes the resulting 128-lane `f16`
 // layout directly through `vsts`.
@@ -39,7 +39,7 @@ module attributes {pto.target_arch = "a5"} {
       %full_mask = pto.pset_b16 "PAT_ALL" : !pto.mask<b16>
       scf.for %src_offset = %c0 to %c1024 step %c64 {
         %dst_offset = arith.muli %src_offset, %c2 : index
-        %out = pto.vlds %ub_in[%src_offset] {dist = "UNPK"} : !pto.ptr<f16, ub> -> !pto.vreg<128xf16>
+        %out = pto.vlds %ub_in[%src_offset] {dist = "UNPK_B16"} : !pto.ptr<f16, ub> -> !pto.vreg<128xf16>
         pto.vsts %out, %ub_out[%dst_offset], %full_mask : !pto.vreg<128xf16>, !pto.ptr<f16, ub>, !pto.mask<b16>
       }
     }

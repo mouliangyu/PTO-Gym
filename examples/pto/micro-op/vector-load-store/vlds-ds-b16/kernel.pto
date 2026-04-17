@@ -4,7 +4,7 @@
 // target_ops: pto.vlds
 // scenarios: core-i16, full-mask, aligned, dist-ds-b16
 // -----------------------------------------------------------------------------
-// Validate one representative `DS` load on `b16`.
+// Validate one representative `DS_B16` load on `b16`.
 
 module attributes {pto.target_arch = "a5"} {
   func.func @vabs_kernel_2d(%arg0: !pto.ptr<i16, gm>, %arg1: !pto.ptr<i16, gm>) {
@@ -32,7 +32,7 @@ module attributes {pto.target_arch = "a5"} {
     pto.vecscope {
       %_:1 = scf.for %offset = %c0 to %c1024 step %c128 iter_args(%remaining = %c1024_i32) -> (i32) {
         %mask, %next_remaining = pto.plt_b16 %remaining : i32 -> !pto.mask<b16>, i32
-        %out = pto.vlds %ub_in[%offset] {dist = "DS"} : !pto.ptr<i16, ub> -> !pto.vreg<128xi16>
+        %out = pto.vlds %ub_in[%offset] {dist = "DS_B16"} : !pto.ptr<i16, ub> -> !pto.vreg<128xi16>
         pto.vsts %out, %ub_out[%offset], %mask : !pto.vreg<128xi16>, !pto.ptr<i16, ub>, !pto.mask<b16>
         scf.yield %next_remaining : i32
       }
