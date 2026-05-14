@@ -38,12 +38,12 @@ struct MrgSortExecutedNumList {
 #include "acl/acl.h"
 #endif
 
-extern "C" __global__ [aicore] void mad_bf16bf16f32_kernel(__gm__ __bf16 *a,
-                                                __gm__ __bf16 *b,
+extern "C" __global__ [aicore] void mad_bf16bf16f32_kernel(__gm__ uint16_t *a,
+                                                __gm__ uint16_t *b,
                                                 __gm__ float *c);
 
-void LaunchMad_bf16bf16f32_kernel(__bf16 *a, __bf16 *b, float *c, void *stream) {
-  mad_bf16bf16f32_kernel<<<1, nullptr, stream>>>((__gm__ __bf16 *)a,
-                                     (__gm__ __bf16 *)b,
+void LaunchMad_bf16bf16f32_kernel(uint16_t *a, uint16_t *b, float *c, void *stream) {
+  mad_bf16bf16f32_kernel<<<1, nullptr, stream>>>((__gm__ uint16_t *)a,
+                                     (__gm__ uint16_t *)b,
                                      (__gm__ float *)c);
 }

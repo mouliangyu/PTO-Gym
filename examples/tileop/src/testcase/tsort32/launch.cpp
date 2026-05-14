@@ -94,4 +94,6 @@ extern "C" __global__ AICORE void TSORT32_f32_2x2084(__gm__ float *src, __gm__ u
 
 void LaunchTSORT32_f32_2x2084(float *src, uint32_t *idx, float *dst, void *stream) {
     TSORT32_f32_2x2084<<<1, nullptr, stream>>>((__gm__ float *)src, (__gm__ uint32_t *)idx, (__gm__ float *)dst);
+    TSORT32_f32_2x2084<<<1, nullptr, stream>>>((__gm__ float *)(src + 3072), (__gm__ uint32_t *)(idx + 3072),
+                                                (__gm__ float *)(dst + 12288));
 }

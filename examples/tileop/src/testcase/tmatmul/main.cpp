@@ -36,9 +36,9 @@ static const TestCase kCases[] = {
 };
 static constexpr size_t kNumCases = sizeof(kCases) / sizeof(kCases[0]);
 
-static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
-    (void)deviceId;
+static int RunCase(const TestCase &tc, int deviceId) {
     int rc = 0;
+    aclrtStream stream = nullptr;
     const size_t lhsElems = tc.lhsRows * tc.lhsCols;
     const size_t rhsElems = tc.rhsRows * tc.rhsCols;
     const size_t outElems = tc.outRows * tc.outCols;
@@ -67,6 +67,9 @@ static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
     void *lhsDevice = nullptr;
     void *rhsDevice = nullptr;
     void *outDevice = nullptr;
+
+    aclrtSetDevice(deviceId);
+    aclrtCreateStream(&stream);
 
     aclrtMallocHost(&lhsHost, lhsBytes);
     aclrtMallocHost(&rhsHost, rhsBytes);
@@ -117,6 +120,9 @@ static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
         aclrtFreeHost(rhsHost);
     if (outHost != nullptr)
         aclrtFreeHost(outHost);
+    if (stream != nullptr)
+        aclrtDestroyStream(stream);
+    aclrtResetDevice(deviceId);
 
     if (rc == 0)
         std::printf("[INFO] case %s done\n", tc.name);
@@ -128,20 +134,17 @@ int main(int argc, char *argv[]) {
 
     int rc = 0;
     int deviceId = 0;
-    aclrtStream stream = nullptr;
 
     aclInit(nullptr);
     if (const char *envDevice = std::getenv("ACL_DEVICE_ID")) {
         deviceId = std::atoi(envDevice);
     }
-    aclrtSetDevice(deviceId);
-    aclrtCreateStream(&stream);
 
     for (size_t i = 0; i < kNumCases; ++i) {
         if (caseFilter != nullptr && std::strcmp(kCases[i].name, caseFilter) != 0) {
             continue;
         }
-        int ret = RunCase(kCases[i], deviceId, stream);
+        int ret = RunCase(kCases[i], deviceId);
         if (ret != 0) {
             std::fprintf(stderr, "[ERROR] case %s failed\n", kCases[i].name);
             rc = 1;
@@ -149,9 +152,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (stream != nullptr)
-        aclrtDestroyStream(stream);
-    aclrtResetDevice(deviceId);
     aclFinalize();
 
     return rc;

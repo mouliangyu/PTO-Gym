@@ -96,8 +96,9 @@ static const TestCase kCases[] = {
 };
 static constexpr size_t kNumCases = sizeof(kCases) / sizeof(kCases[0]);
 
-static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
+static int RunCase(const TestCase &tc) {
     int rc = 0;
+    aclrtStream stream = nullptr;
     const size_t srcElemCount = tc.rows * tc.cols;
     const size_t srcFileSize  = srcElemCount * tc.elemSize;
     const size_t dstElemCount = tc.validRows * 1;
@@ -112,6 +113,8 @@ static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
 
     void *src0Host = nullptr, *dstHost = nullptr;
     void *src0Device = nullptr, *dstDevice = nullptr;
+
+    aclrtCreateStream(&stream);
 
     aclrtMallocHost(&src0Host, srcFileSize);
     aclrtMallocHost(&dstHost, dstFileSize);
@@ -151,6 +154,8 @@ static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
         aclrtFreeHost(src0Host);
     if (dstHost != nullptr)
         aclrtFreeHost(dstHost);
+    if (stream != nullptr)
+        aclrtDestroyStream(stream);
 
     if (rc == 0)
         std::printf("[INFO] case %s done\n", tc.name);
@@ -163,20 +168,18 @@ int main(int argc, char *argv[]) {
 
     int rc = 0;
     int deviceId = 0;
-    aclrtStream stream = nullptr;
 
     aclInit(nullptr);
     if (const char *envDevice = std::getenv("ACL_DEVICE_ID")) {
         deviceId = std::atoi(envDevice);
     }
     aclrtSetDevice(deviceId);
-    aclrtCreateStream(&stream);
 
     for (size_t i = 0; i < kNumCases; ++i) {
         if (caseFilter != nullptr && std::strcmp(kCases[i].name, caseFilter) != 0) {
             continue;
         }
-        int ret = RunCase(kCases[i], deviceId, stream);
+        int ret = RunCase(kCases[i]);
         if (ret != 0) {
             std::fprintf(stderr, "[ERROR] case %s failed\n", kCases[i].name);
             rc = 1;
@@ -184,8 +187,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (stream != nullptr)
-        aclrtDestroyStream(stream);
     aclrtResetDevice(deviceId);
     aclFinalize();
 

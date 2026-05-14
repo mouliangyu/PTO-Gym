@@ -62,8 +62,9 @@ static const TestCase kCases[] = {
 };
 static constexpr size_t kNumCases = sizeof(kCases) / sizeof(kCases[0]);
 
-static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
+static int RunCase(const TestCase &tc, int deviceId) {
     int rc = 0;
+    aclrtStream stream = nullptr;
     const size_t src0ElemCount = tc.src0Rows * tc.src0Cols;
     const size_t src1ElemCount = tc.src1Rows * tc.src1Cols;
     const size_t dstElemCount  = tc.dstRows * tc.dstCols;
@@ -80,6 +81,13 @@ static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
 
     void *src0Host = nullptr, *src1Host = nullptr, *dstHost = nullptr;
     void *src0Device = nullptr, *src1Device = nullptr, *dstDevice = nullptr;
+
+    aclrtSetDevice(deviceId);
+    if (aclrtCreateStream(&stream) != ACL_SUCCESS) {
+        std::fprintf(stderr, "[ERROR] failed to create stream for %s\n", tc.name);
+        aclrtResetDevice(deviceId);
+        return 1;
+    }
 
     aclrtMallocHost((void **)(&src0Host), src0FileSize);
     aclrtMallocHost((void **)(&src1Host), src1FileSize);
@@ -126,6 +134,9 @@ static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
         aclrtFreeHost(src1Host);
     if (dstHost != nullptr)
         aclrtFreeHost(dstHost);
+    if (stream != nullptr)
+        aclrtDestroyStream(stream);
+    aclrtResetDevice(deviceId);
 
     if (rc == 0)
         std::printf("[INFO] case %s done\n", tc.name);
@@ -137,20 +148,17 @@ int main(int argc, char *argv[]) {
 
     int rc = 0;
     int deviceId = 0;
-    aclrtStream stream = nullptr;
 
     aclInit(nullptr);
     if (const char *envDevice = std::getenv("ACL_DEVICE_ID")) {
         deviceId = std::atoi(envDevice);
     }
-    aclrtSetDevice(deviceId);
-    aclrtCreateStream(&stream);
 
     for (size_t i = 0; i < kNumCases; ++i) {
         if (caseFilter != nullptr && std::strcmp(kCases[i].name, caseFilter) != 0) {
             continue;
         }
-        int ret = RunCase(kCases[i], deviceId, stream);
+        int ret = RunCase(kCases[i], deviceId);
         if (ret != 0) {
             std::fprintf(stderr, "[ERROR] case %s failed\n", kCases[i].name);
             rc = 1;
@@ -158,9 +166,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (stream != nullptr)
-        aclrtDestroyStream(stream);
-    aclrtResetDevice(deviceId);
     aclFinalize();
 
     return rc;

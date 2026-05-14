@@ -41,8 +41,9 @@ static const TestCase kCases[] = {
 };
 static constexpr size_t kNumCases = sizeof(kCases) / sizeof(kCases[0]);
 
-static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
+static int RunCase(const TestCase &tc) {
     int rc = 0;
+    aclrtStream stream = nullptr;
     const size_t elemCount = tc.rows * tc.cols;
     size_t fileSize  = elemCount * tc.elemSize;
 
@@ -53,6 +54,8 @@ static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
 
     void *inputHost = nullptr, *outputHost = nullptr;
     void *inputDevice = nullptr, *outputDevice = nullptr;
+
+    aclrtCreateStream(&stream);
 
     aclrtMallocHost(&inputHost, fileSize);
     aclrtMallocHost(&outputHost, fileSize);
@@ -87,6 +90,8 @@ static int RunCase(const TestCase &tc, int deviceId, aclrtStream stream) {
         aclrtFreeHost(inputHost);
     if (outputHost != nullptr)
         aclrtFreeHost(outputHost);
+    if (stream != nullptr)
+        aclrtDestroyStream(stream);
 
     if (rc == 0)
         std::printf("[INFO] case %s done\n", tc.name);
@@ -98,20 +103,18 @@ int main(int argc, char *argv[]) {
 
     int rc = 0;
     int deviceId = 0;
-    aclrtStream stream = nullptr;
 
     aclInit(nullptr);
     if (const char *envDevice = std::getenv("ACL_DEVICE_ID")) {
         deviceId = std::atoi(envDevice);
     }
     aclrtSetDevice(deviceId);
-    aclrtCreateStream(&stream);
 
     for (size_t i = 0; i < kNumCases; ++i) {
         if (caseFilter != nullptr && std::strcmp(kCases[i].name, caseFilter) != 0) {
             continue;
         }
-        int ret = RunCase(kCases[i], deviceId, stream);
+        int ret = RunCase(kCases[i]);
         if (ret != 0) {
             std::fprintf(stderr, "[ERROR] case %s failed\n", kCases[i].name);
             rc = 1;
@@ -119,8 +122,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (stream != nullptr)
-        aclrtDestroyStream(stream);
     aclrtResetDevice(deviceId);
     aclFinalize();
 

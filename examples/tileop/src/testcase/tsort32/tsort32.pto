@@ -616,48 +616,48 @@ module attributes {pto.target_arch = "a5", pto.kernel_kind = #pto.kernel_kind<ve
     %c24576 = arith.constant 24576  : index
 
     %src_view = pto.make_tensor_view %src_ptr,
-      shape = [%c1, %c1, %c1, %c2, %c3072],
-      strides = [%c6144, %c6144, %c6144, %c3072, %c1]
-      : !pto.tensor_view<1x1x1x2x3072xf32>
+      shape = [%c1, %c1, %c1, %c1, %c3072],
+      strides = [%c3072, %c3072, %c3072, %c3072, %c1]
+      : !pto.tensor_view<1x1x1x1x3072xf32>
     %idx_view = pto.make_tensor_view %idx_ptr,
-      shape = [%c1, %c1, %c1, %c2, %c3072],
-      strides = [%c6144, %c6144, %c6144, %c3072, %c1]
-      : !pto.tensor_view<1x1x1x2x3072xui32>
+      shape = [%c1, %c1, %c1, %c1, %c3072],
+      strides = [%c3072, %c3072, %c3072, %c3072, %c1]
+      : !pto.tensor_view<1x1x1x1x3072xui32>
     %dst_view = pto.make_tensor_view %dst_ptr,
-      shape = [%c1, %c1, %c1, %c2, %c12288],
-      strides = [%c24576, %c24576, %c24576, %c12288, %c1]
-      : !pto.tensor_view<1x1x1x2x12288xf32>
+      shape = [%c1, %c1, %c1, %c1, %c12288],
+      strides = [%c12288, %c12288, %c12288, %c12288, %c1]
+      : !pto.tensor_view<1x1x1x1x12288xf32>
 
     %src_part = pto.partition_view %src_view,
       offsets = [%c0, %c0, %c0, %c0, %c0],
-      sizes = [%c1, %c1, %c1, %c2, %c2084]
-      : !pto.tensor_view<1x1x1x2x3072xf32> -> !pto.partition_tensor_view<1x1x1x2x2084xf32>
+      sizes = [%c1, %c1, %c1, %c1, %c2084]
+      : !pto.tensor_view<1x1x1x1x3072xf32> -> !pto.partition_tensor_view<1x1x1x1x2084xf32>
     %idx_part = pto.partition_view %idx_view,
       offsets = [%c0, %c0, %c0, %c0, %c0],
-      sizes = [%c1, %c1, %c1, %c2, %c2084]
-      : !pto.tensor_view<1x1x1x2x3072xui32> -> !pto.partition_tensor_view<1x1x1x2x2084xui32>
+      sizes = [%c1, %c1, %c1, %c1, %c2084]
+      : !pto.tensor_view<1x1x1x1x3072xui32> -> !pto.partition_tensor_view<1x1x1x1x2084xui32>
     %dst_part = pto.partition_view %dst_view,
       offsets = [%c0, %c0, %c0, %c0, %c0],
-      sizes = [%c1, %c1, %c1, %c2, %c4168]
-      : !pto.tensor_view<1x1x1x2x12288xf32> -> !pto.partition_tensor_view<1x1x1x2x4168xf32>
+      sizes = [%c1, %c1, %c1, %c1, %c4168]
+      : !pto.tensor_view<1x1x1x1x12288xf32> -> !pto.partition_tensor_view<1x1x1x1x4168xf32>
 
-    %src_tile = pto.alloc_tile : !pto.tile_buf<vec, 2x3072xf32, valid=2x2084>
-    %idx_tile = pto.alloc_tile : !pto.tile_buf<vec, 2x3072xui32, valid=2x2084>
-    %dst_tile = pto.alloc_tile : !pto.tile_buf<vec, 2x12288xf32, valid=2x4168>
+    %src_tile = pto.alloc_tile : !pto.tile_buf<vec, 1x3072xf32, valid=1x2084>
+    %idx_tile = pto.alloc_tile : !pto.tile_buf<vec, 1x3072xui32, valid=1x2084>
+    %dst_tile = pto.alloc_tile : !pto.tile_buf<vec, 1x12288xf32, valid=1x4168>
     %tmp_tile = pto.alloc_tile : !pto.tile_buf<vec, 1x2088xf32>
 
-    pto.tload ins(%src_part : !pto.partition_tensor_view<1x1x1x2x2084xf32>)
-              outs(%src_tile : !pto.tile_buf<vec, 2x3072xf32, valid=2x2084>)
-    pto.tload ins(%idx_part : !pto.partition_tensor_view<1x1x1x2x2084xui32>)
-              outs(%idx_tile : !pto.tile_buf<vec, 2x3072xui32, valid=2x2084>)
+    pto.tload ins(%src_part : !pto.partition_tensor_view<1x1x1x1x2084xf32>)
+              outs(%src_tile : !pto.tile_buf<vec, 1x3072xf32, valid=1x2084>)
+    pto.tload ins(%idx_part : !pto.partition_tensor_view<1x1x1x1x2084xui32>)
+              outs(%idx_tile : !pto.tile_buf<vec, 1x3072xui32, valid=1x2084>)
 
-    pto.tsort32 ins(%src_tile, %idx_tile, %tmp_tile : !pto.tile_buf<vec, 2x3072xf32, valid=2x2084>,
-                          !pto.tile_buf<vec, 2x3072xui32, valid=2x2084>,
+    pto.tsort32 ins(%src_tile, %idx_tile, %tmp_tile : !pto.tile_buf<vec, 1x3072xf32, valid=1x2084>,
+                          !pto.tile_buf<vec, 1x3072xui32, valid=1x2084>,
                           !pto.tile_buf<vec, 1x2088xf32>)
-             outs(%dst_tile : !pto.tile_buf<vec, 2x12288xf32, valid=2x4168>)
+             outs(%dst_tile : !pto.tile_buf<vec, 1x12288xf32, valid=1x4168>)
 
-    pto.tstore ins(%dst_tile : !pto.tile_buf<vec, 2x12288xf32, valid=2x4168>)
-               outs(%dst_part : !pto.partition_tensor_view<1x1x1x2x4168xf32>)
+    pto.tstore ins(%dst_tile : !pto.tile_buf<vec, 1x12288xf32, valid=1x4168>)
+               outs(%dst_part : !pto.partition_tensor_view<1x1x1x1x4168xf32>)
     return
   }
 }
